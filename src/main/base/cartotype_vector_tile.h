@@ -502,7 +502,7 @@ stored in graphics memory, and to draw the tile using that data.
 class CVectorTileServer: public MFrameworkObserver
     {
     public:
-    CVectorTileServer(CFramework& aFramework,std::shared_ptr<CVectorTileHelper> aHelper,size_t aThreadCount,size_t aMaxZoomLevel = 32,size_t aMaxTileCacheItems = 256);
+    CVectorTileServer(CFramework& aFramework,std::shared_ptr<CVectorTileHelper> aHelper,size_t aThreadCount,size_t aMaxZoomLevel = 32,size_t aMaxTileCacheItems = 128);
     ~CVectorTileServer();
 
     void Draw();
@@ -553,7 +553,7 @@ class CVectorTileServer: public MFrameworkObserver
     size_t m_max_zoom_level;
     TTaskQueue<TTileSpec> m_task_queue;
     TTaskOutputQueue<std::shared_ptr<CVectorTile>> m_tile_queue;
-    size_t m_max_tile_cache_items = 64;
+    size_t m_max_tile_cache_items = 128;
     std::vector<std::shared_ptr<CVectorTile>> m_tile_cache;
     std::vector<std::unique_ptr<CDrawTileTask>> m_task_array;
     std::vector<std::thread> m_thread_array;

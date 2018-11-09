@@ -189,7 +189,7 @@ class CFrameworkMapDataSet
 
     ~CFrameworkMapDataSet();
 
-    std::unique_ptr<CFrameworkMapDataSet> Copy(TResult& aError,CFrameworkEngine& aEngine) const;
+    std::unique_ptr<CFrameworkMapDataSet> Copy(TResult& aError,CFrameworkEngine& aEngine,bool aFull = true) const;
     TResult LoadMapData(CFrameworkEngine& aEngine,const CString& aMapFileName,const std::string* aEncryptionKey = nullptr);
     TResult LoadMapData(CFrameworkEngine& aEngine,const TTileParam& aTileParam);
     TResult LoadMapData(std::unique_ptr<CMapDataBase> aDb);
@@ -412,7 +412,7 @@ class CFramework: public MNavigatorObserver
     ~CFramework();
 
     // copying and naming
-    std::unique_ptr<CFramework> Copy(TResult& aError) const;
+    std::unique_ptr<CFramework> Copy(TResult& aError,bool aFull = true) const;
     std::string Name() const;
     std::string Proj4Param() const;
 
