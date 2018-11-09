@@ -152,6 +152,7 @@ class ViewController: GLKViewController, UIGestureRecognizerDelegate, UISearchBa
         {
             let p = aRecognizer.location(in: nil)
             m_framework.zoom(at: Double(aRecognizer.scale), x: Double(p.x * m_ui_scale), y: Double(p.y * m_ui_scale), coordType: DisplayCoordType)
+            aRecognizer.scale = 1
         }
         else if (aRecognizer.state == UIGestureRecognizerState.recognized)
         {
@@ -166,6 +167,7 @@ class ViewController: GLKViewController, UIGestureRecognizerDelegate, UISearchBa
         if (aRecognizer.state == UIGestureRecognizerState.changed)
         {
             m_framework.rotate(Double(aRecognizer.rotation) / Double.pi * 180)
+            aRecognizer.rotation = 0
         }
         else if (aRecognizer.state == UIGestureRecognizerState.recognized)
         {
@@ -363,8 +365,9 @@ class ViewController: GLKViewController, UIGestureRecognizerDelegate, UISearchBa
             var nav_data = CartoTypeNavigationData.init(validity: KTimeValid, time: m_location.timestamp.timeIntervalSinceReferenceDate, longitude: 0, latitude: 0, speed: 0, course: 0, height: 0)
             if (m_location.horizontalAccuracy > 0 && m_location.horizontalAccuracy <= 100)
                 {
-                nav_data.validity |= KCourseValid
-                nav_data.course = m_location.course
+                nav_data.validity |= KPositionValid
+                nav_data.latitude = m_location.coordinate.latitude
+                nav_data.longitude = m_location.coordinate.longitude
                 }
             if (m_location.course >= 0)
                 {
