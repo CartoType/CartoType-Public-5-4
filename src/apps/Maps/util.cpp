@@ -7,7 +7,7 @@ void CopyBitmapToImage(const CartoType::TBitmap& aSource,QImage& aDest)
     {
     assert(aDest.width() == aSource.Width() &&
            aDest.height() == aSource.Height() &&
-           aDest.format == QImage::Format_ARGB32_Premultiplied &&
+           aDest.format() == QImage::Format_ARGB32_Premultiplied &&
            aSource.Type() == CartoType::TBitmapType::RGBA32);
 
     uint32_t* dest_row = (uint32_t*)aDest.bits();

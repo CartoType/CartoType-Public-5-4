@@ -40,6 +40,13 @@ namespace CartoTypeDemo
             m_map_renderer = new CartoType.MapRenderer(m_framework, Handle);
             m_graphics_acceleration = m_map_renderer.Valid();
             CreateLegend();
+
+            // Sample code to insert a green pushpin.
+            // String s = CartoType.Util.SetAttribute("", "_color", "green");
+            // long id = 0;
+            // double lon = -1.289708;
+            // double lat = 50.655351;
+            // m_framework.InsertPointMapObject(0, "pushpin", lon, lat, CartoType.CoordType.Degree, s, 0,ref id, false);
         }
 
         private CartoType.Framework m_framework;
