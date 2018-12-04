@@ -124,17 +124,11 @@ class Arithmetic
     */ 
     static double AngleDiff(double aP,double aQ)
         {
-        double diff = aP - aQ;
-        if (aP > aQ)
-            {
-            if (diff > KPiDouble)
-                diff -= KPiDouble * 2;
-            }
-        else
-            {
-            if (diff < -KPiDouble)
-                diff += KPiDouble * 2;
-            }
+        double diff = aQ - aP;
+        if (diff > KPiDouble)
+            diff -= KPiDouble * 2;
+        else if (diff < -KPiDouble)
+            diff += KPiDouble * 2;
         return diff;
         }
 

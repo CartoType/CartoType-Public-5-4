@@ -200,7 +200,8 @@ class TLabelSetSpec: public TViewState
         {
         return iWidthInPixels == aOther.iWidthInPixels &&
                iHeightInPixels == aOther.iHeightInPixels &&
-               iViewInMapCoords == aOther.iViewInMapCoords &&
+               iViewCenterInMapCoords == aOther.iViewCenterInMapCoords &&
+               iScaleDenominator == aOther.iScaleDenominator &&
                iRotationDegrees == aOther.iRotationDegrees &&
                iPerspective == aOther.iPerspective &&
                iPerspectiveParam == aOther.iPerspectiveParam;
@@ -211,8 +212,8 @@ class TLabelSetSpec: public TViewState
         }
     bool operator<(const TLabelSetSpec& aOther) const
         {
-        return std::forward_as_tuple(iWidthInPixels,iHeightInPixels,iViewInMapCoords,iRotationDegrees,iPerspective,iPerspectiveParam) <
-               std::forward_as_tuple(aOther.iWidthInPixels,aOther.iHeightInPixels,aOther.iViewInMapCoords,aOther.iRotationDegrees,aOther.iPerspective,aOther.iPerspectiveParam);
+        return std::forward_as_tuple(iWidthInPixels,iHeightInPixels,iViewCenterInMapCoords,iScaleDenominator,iRotationDegrees,iPerspective,iPerspectiveParam) <
+               std::forward_as_tuple(aOther.iWidthInPixels,aOther.iHeightInPixels,aOther.iViewCenterInMapCoords,aOther.iScaleDenominator,aOther.iRotationDegrees,aOther.iPerspective,aOther.iPerspectiveParam);
         }
 
     bool Supersedes(const TLabelSetSpec& aOther) const
@@ -384,10 +385,14 @@ class CPositionedLabel
 class TMapState
     {
     public:
+    void Set(CFramework& aFramework);
+    TMapState Interpolate(const TMapState& aOther,double aTime);
+
     TViewState m_view_state;
     TFixedSizeContour<4,true> m_view_in_map_coords;
-    double m_scale_denominator;
     TTransform3FP m_map_transform;
+    TTransformFP m_map_transform_2D;
+    TTransform3FP m_perspective_transform;
     };
 
 /**
@@ -395,7 +400,7 @@ A class to store the current state of the master framework in a thread-safe way.
 It is set by the map app thread when the client app changes pans, zooms, or
 rotates the map.
 */
-class TThreadSafeMapState: private TMapState
+class TThreadSafeMapState
     {
     public:
     void Set(CFramework& aFramework);
@@ -403,6 +408,11 @@ class TThreadSafeMapState: private TMapState
 
     private:
     std::mutex m_mutex;
+    TMapState m_start_state;
+    TMapState m_end_state;
+    TMapState m_cur_state;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_start_time;
+    double m_time = 1.0;    // varies between 0 and 1 as the state passes from start to end
     };
 
 class TStyleSheetData

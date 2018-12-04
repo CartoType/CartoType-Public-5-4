@@ -90,6 +90,17 @@ class TTransform
     uint32 iType;                       // non-zero if the transform is not identity
     };
 
+/** The components of a transform. */
+class TTransformComponents
+    {
+    public:
+    TPointFP iTranslation;
+    TPointFP iCenterOfRotation;
+    double iRotation = 0;
+    TPointFP iScale = { 1, 1 };
+    TPointFP iShear;
+    };
+
 /** A floating point affine 2D transformation. */
 class TTransformFP
     {
@@ -126,6 +137,9 @@ class TTransformFP
     double D() const { return iD; }
     double Tx() const { return iTx; }
     double Ty() const { return iTy; }
+    TPointFP CenterOfRotation() const;
+    TTransformComponents Components() const;
+    TTransformFP Interpolate(const TTransformFP& aOther,double aTime);
     bool operator==(const TTransformFP& aTransform) const;
     bool operator!=(const TTransformFP& aTransform) const { return !(*this == aTransform); }
     uint32 Type() const;
@@ -201,6 +215,7 @@ class TPerspectiveTransformFP
     void TransformToCamera(TPoint3FP& aPoint) const;
     void TransformFromCamera(TPoint3FP& aPoint) const;
     void InverseTransform(TPointFP& aPoint) const;
+    static void InverseTransform(const TTransform3FP& aInverseTransform,TPointFP& aPoint);
     const TTransform3FP& Transform() const { return iTransform; }
     
     private:

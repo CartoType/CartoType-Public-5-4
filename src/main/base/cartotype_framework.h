@@ -328,9 +328,13 @@ class TPerspectiveParam
 class TViewState
     {
     public:
+    bool operator==(const TViewState& aOther) const;
+    bool operator!=(const TViewState& aOther) const { return !(*this == aOther); };
+
     int32 iWidthInPixels = 256;
     int32 iHeightInPixels = 256;
-    TRectFP iViewInMapCoords;
+    TPointFP iViewCenterInMapCoords;
+    double iScaleDenominator = 0;
     double iRotationDegrees = 0;
     bool iPerspective = false;
     TPerspectiveParam iPerspectiveParam;
@@ -481,28 +485,25 @@ class CFramework: public MNavigatorObserver
     void SetPerspective(bool aSet);
     void SetPerspective(const TPerspectiveParam& aParam);
     bool Perspective() const;
-    TResult Zoom(double aZoomFactor);
+    void Zoom(double aZoomFactor);
     TResult ZoomAt(double aZoomFactor,double aX,double aY,TCoordType aCoordType);
     void Rotate(double aAngle);
+    TResult RotateAt(double aAngle,double aX,double aY,TCoordType aCoordType);
     void SetRotation(double aAngle);
+    TResult SetRotationAt(double aAngle,double aX,double aY,TCoordType aCoordType);
     double Rotation() const;
-    void RotateRadians(double aAngle);
-    void SetRotationRadians(double aAngle);
-    double RotationRadians() const;
+    TResult RotateAndZoom(double aAngle,double aZoomFactor,double aX,double aY,TCoordType aCoordType);
     TResult Pan(int aDx,int aDy);
     TResult Pan(const TPoint& aFrom,const TPoint& aTo);
     TResult Pan(double aFromX,double aFromY,TCoordType aFromCoordType,
                           double aToX,double aToY,TCoordType aToCoordType);
-    TResult Scroll(double aXPages,double aYPages);
-    void GetScrollInfo(int32& aXRange,int32& aYRange,TRect& aPosition) const;
-    void SetScrollInfo(const TPoint &aPosition);
     TResult SetViewCenter(double aX,double aY,TCoordType aCoordType);
     TResult SetView(double aMinX,double aMinY,double aMaxX,double aMaxY,TCoordType aCoordType,int32 aMarginInPixels = 0,int32 aMinScaleDenominator = 0);
-    void SetView(const CMapObject * const * aMapObjectArray,size_t aMapObjectCount,int32 aMarginInPixels,int32 aMinScaleDenominator);
-    void SetView(const CMapObjectArray& aMapObjectArray,int32 aMarginInPixels,int32 aMinScaleDenominator);
-    void SetView(const CMapObject& aMapObject,int32 aMarginInPixels,int32 aMinScaleDenominator);
-    void SetView(const TViewState& aViewState);
-    void SetViewToFillMap();
+    TResult SetView(const CMapObject * const * aMapObjectArray,size_t aMapObjectCount,int32 aMarginInPixels,int32 aMinScaleDenominator);
+    TResult SetView(const CMapObjectArray& aMapObjectArray,int32 aMarginInPixels,int32 aMinScaleDenominator);
+    TResult SetView(const CMapObject& aMapObject,int32 aMarginInPixels,int32 aMinScaleDenominator);
+    TResult SetView(const TViewState& aViewState);
+    TResult SetViewToFillMap();
     TResult GetView(double& aMinX,double& aMinY,double& aMaxX,double& aMaxY,TCoordType aCoordType) const;
     TResult GetView(TRectFP& aView,TCoordType aCoordType) const;
     TResult GetView(TFixedSizeContour<4,true>& aView,TCoordType aCoordType) const;
@@ -535,7 +536,6 @@ class CFramework: public MNavigatorObserver
     TResult ConvertCoords(double* aCoordArray,size_t aCoordArraySize,TCoordType aFromCoordType,TCoordType aToCoordType) const;
     TResult ConvertCoords(const TWritableCoordSet& aCoordSet,TCoordType aFromCoordType,TCoordType aToCoordType) const;
     TResult ConvertPoint(double& aX,double& aY,TCoordType aFromCoordType,TCoordType aToCoordType) const;
-    TResult ConvertPoint(TPoint& aPoint,TCoordType aFromCoordType,TCoordType aToCoordType) const;
     double PixelsToMeters(double aPixels) const;
     double MetersToPixels(double aMeters) const;
     CString DataSetName() const;
@@ -560,6 +560,8 @@ class CFramework: public MNavigatorObserver
     bool ObjectWouldBeDrawn(TResult& aError,uint64 aId,TMapObjectType aType,const CString& aLayer,int32 aIntAttrib,const CString& aStringAttrib) const;
     bool SetDraw3DBuildings(bool aEnable);
     bool Draw3DBuildings() const;
+    bool SetAnimateTransitions(bool aEnable);
+    bool AnimateTransitions() const;
 
     // adding and removing style sheet icons loaded from files
     TResult LoadIcon(const CString& aFileName,const CString& aId,const TPoint& aHotSpot,const TPoint& aLabelPos,int32 aLabelMaxLength);
@@ -735,6 +737,8 @@ class CFramework: public MNavigatorObserver
     std::unique_ptr<CMapStore> NewMapStore(const CMapStyle& aStyleSheet,const TRect& aBounds,bool aUseFastAllocator);
     const CMapDataBase& MainDb() const { return iMapDataSet->MainDb(); }
     TTransform3FP MapTransform() const;
+    TTransformFP MapTransform2D() const;
+    TTransform3FP PerspectiveTransform() const;
     std::shared_ptr<CEngine> Engine() const { return iEngine->Engine(); }
     CMap& Map() const { return *iMap; }
     TColor OutlineColor() const;
@@ -749,6 +753,7 @@ class CFramework: public MNavigatorObserver
     CMapDrawParam& MapDrawParam() const { return *iMapDrawParam; }
     double PolygonArea(const TCoordSet& aCoordSet,TCoordType aCoordType);
     CPositionedBitmap GetNoticeBitmap();
+    double Pixels(double aSize,const char* aUnit) const;
 
     private:
     CFramework();
@@ -763,7 +768,6 @@ class CFramework: public MNavigatorObserver
     void InvalidateMapBitmaps() { iMapBitmapType = TMapBitmapType::None; iWebMapServiceBitmap = nullptr; }
     void HandleChangedView() { InvalidateMapBitmaps(); ViewChanged(); }
     void HandleChangedLayer() { InvalidateMapBitmaps(); LayerChanged(); }
-    void SetViewHelper(const TRect& aBounds,int32 aMarginInPixels,int32 aMinScaleDenominator);
     TResult CreateTileServer(int32 aTileWidthInPixels,int32 aTileHeightInPixels);
     TResult SetRoutePositionAndVector(const TPoint& aPos,const TPoint& aVector);
     TResult CreateNavigator();

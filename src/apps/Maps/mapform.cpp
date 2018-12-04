@@ -1545,7 +1545,7 @@ void MapForm::SetGraphicsAcceleration(bool aEnable)
         if (m_graphics_acceleration)
             {
             connect(&m_graphics_acceleration_update_timer,SIGNAL(timeout()),this,SLOT(update()));
-            m_graphics_acceleration_update_timer.start(100);
+            m_graphics_acceleration_update_timer.start(33);
             }
         else
             m_graphics_acceleration_update_timer.stop();
