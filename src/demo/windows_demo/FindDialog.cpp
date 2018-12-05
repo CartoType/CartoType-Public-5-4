@@ -33,7 +33,7 @@ iFramework(aFramework)
 
 CartoType::CMapObjectArray CFindTextDialog::FoundObjectArray()
     {
-    if (iListBoxIndex >= 0 && iListBoxIndex <= iMapObjectGroupArray.size())
+    if (iListBoxIndex >= 0 && size_t(iListBoxIndex) <= iMapObjectGroupArray.size())
         return std::move(iMapObjectGroupArray[iListBoxIndex].iMapObjectArray);
 
     CartoType::CMapObjectArray a;

@@ -158,6 +158,13 @@ void MapForm::resizeEvent(QResizeEvent* aEvent)
         m_framework->Resize(aEvent->size().width(),aEvent->size().height());
         m_map_image.reset(new QImage(aEvent->size(),QImage::Format_ARGB32_Premultiplied));
         }
+
+    static bool first = true;
+    if (first)
+        {
+        m_framework->SetViewToFillMap();
+        first = false;
+        }
     }
 
 void MapForm::paintEvent(QPaintEvent* aEvent)
@@ -1006,6 +1013,8 @@ void MapForm::ShowNextFoundObject()
                                                                   CartoType::TCoordType::MapMeter,m_found_object_id,true);
     if (!error)
         m_framework->SetView(*object,64,4000);
+        m_framework->SetAnimateTransitions(animate);
+        }
     if (error)
         return;
 

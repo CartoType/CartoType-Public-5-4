@@ -199,6 +199,7 @@ protected:
 
 private:
     void TestCode();
+    bool SetCentre(CPoint& aPoint);
     void Update() { Invalidate(false); }
     void PanToDraggedPosition();
     void StopDragging();
@@ -236,6 +237,7 @@ private:
     bool iDrawDrivingInstructions = false;				    // if true, draw driving instructions
     bool iMapDragEnabled = false;						    // true if dragging the map
     CartoType::TPoint iMapDragAnchor;
+    CartoType::TPointFP iMapDragAnchorInMapCoords;
     CartoType::TPoint iMapDragOffset;
     UINT iFlyThroughTimer = 0;								// if non-zero, ID of timer used to fly through a route
     std::unique_ptr<CartoType::TRouteIterator> iRouteIter;	// if non-null, an iterator used to traverse a route

@@ -231,8 +231,9 @@ void CCartoTypeDemoView::CreateLegend()
     legend->AddMapObjectLine(CartoType::TMapObjectType::Polygon,"land/minor","cns",0,"","construction, quarry, landfill, etc.");
     legend->AddMapObjectLine(CartoType::TMapObjectType::Point,"amenity/minor","stn",0,"Berkhamsted","station");
 
-    legend->SetAlignment(CartoType::TAlign::Center);
-    legend->AddScaleLine(iMetricUnits);
+    // Uncomment these lines to create a scale bar as part of the legend.
+    // legend->SetAlignment(CartoType::TAlign::Center);
+    // legend->AddScaleLine(iMetricUnits);
 
     legend->SetBorder(CartoType::KGray,1,4,"pt");
     CartoType::TColor b(CartoType::KWhite);
@@ -698,7 +699,7 @@ void CCartoTypeDemoView::OnRButtonUp(UINT nFlags, CPoint point)
             {
             TRoutePoint* waypoint = nullptr;
 
-            for (int i = 1; waypoint == nullptr && i < iRoutePointArray.size() - 1; i++)
+            for (size_t i = 1; waypoint == nullptr && i < iRoutePointArray.size() - 1; i++)
                 if (iRoutePointArray[i].iId == pushpin_id)
                     waypoint = &iRoutePointArray[i];
             if (waypoint == nullptr)
@@ -722,7 +723,7 @@ void CCartoTypeDemoView::OnRButtonUp(UINT nFlags, CPoint point)
         {
         uint64_t count = 0;
         iFramework->DeleteMapObjects(iWritableMapHandle,pushpin_id,pushpin_id,count);
-        for (int i = 1; i < iRoutePointArray.size() - 1; i++)
+        for (size_t i = 1; i < iRoutePointArray.size() - 1; i++)
             if (iRoutePointArray[i].iId == pushpin_id)
                 {
                 iRoutePointArray.erase(iRoutePointArray.begin() + i);
@@ -957,7 +958,7 @@ void CCartoTypeDemoView::OnRemoveNearbyObject(const CartoType::CMapObject* aObje
 
 void CCartoTypeDemoView::PanToDraggedPosition()
     {
-    CartoType::TPoint to(iMapDragAnchor);
+    auto to = iMapDragAnchor;
     to += iMapDragOffset;
     CartoType::TResult error = iFramework->Pan(iMapDragAnchor,to);
 
@@ -1084,7 +1085,7 @@ void CCartoTypeDemoView::OnInitialUpdate()
     int h = rect.bottom - rect.top;
     param.iViewHeight = h;
     param.iViewWidth = w;
-    param.iTextIndexLevels = 1;
+    param.iTextIndexLevels = 0;
 
     iFramework = CartoType::CFramework::New(error,param);
     if (!error)
@@ -1127,12 +1128,13 @@ void CCartoTypeDemoView::OnInitialUpdate()
     CreateLegend();
     iFramework->EnableLegend(iDrawLegend);
     iFramework->SetScaleBar(iMetricUnits,2.5,"in",CartoType::TNoticePosition::BottomLeft);
+    iFramework->SetVehiclePosOffset(0,0.25);
+    iFramework->SetAnimateTransitions(true);
 
-    // UNCOMMENT THE NEXT LINE TO ENABLE GRAPHICS ACCELERATION
-    // iMapRenderer.reset(new CartoType::CMapRenderer(*iFramework,m_hWnd));
+    // COMMENT OUT THE NEXT LINE TO DISABLE GRAPHICS ACCELERATION
+    iMapRenderer = std::make_unique<CartoType::CMapRenderer>(*iFramework,m_hWnd);
  
-    // Do not set the pixel size here; use the default value of 144dpi.
-    // Add a call to iFramework->SetResolutionDpi to set the pixel size.
+    // Add a call to iFramework->SetResolutionDpi to set the pixel size. The default resolution is 144dpi, which works well on Windows.
 
     TestCode();
     }
@@ -1157,6 +1159,22 @@ BOOL CCartoTypeDemoView::OnEraseBkgnd(CDC* /*pDC*/)
     return TRUE;
     }
 
+bool CCartoTypeDemoView::SetCentre(CPoint& aPoint)
+    {
+    GetCursorPos(&aPoint);
+    ScreenToClient(&aPoint);
+    CRect r;
+    GetClientRect(&r);
+    bool set_centre = false;
+    if (aPoint.x >= r.left && aPoint.x < r.right && aPoint.y >= r.top && aPoint.y <= r.bottom)
+        {
+        aPoint.x -= r.left;
+        aPoint.y -= r.top;
+        set_centre = true;
+        }
+    return set_centre;
+    }
+
 BOOL CCartoTypeDemoView::OnMouseWheel(UINT nFlags,short zDelta,CPoint point)
     {
     if (zDelta == 0)
@@ -1165,16 +1183,7 @@ BOOL CCartoTypeDemoView::OnMouseWheel(UINT nFlags,short zDelta,CPoint point)
     CCartoTypeDemoApp* app = (CCartoTypeDemoApp*)AfxGetApp();
 
     // If the mouse pointer is in the window, centre the zoom at that point.
-    RECT r;
-    GetClientRect(&r);
-    bool set_centre = false;
-    ScreenToClient(&point);
-    if (point.x >= r.left && point.x < r.right && point.y >= r.top && point.y <= r.bottom)
-        {
-        point.x -= r.left;
-        point.y -= r.top;
-        set_centre = true;
-        }
+    bool set_centre = SetCentre(point);
 
     /*
     If using the image server, always zoom by a factor of 2 because
@@ -1209,10 +1218,13 @@ void CCartoTypeDemoView::OnMouseMove(UINT /*nFlags*/,CPoint point)
 
         if (iMapRenderer || iUsingImageServer)
             {
-            iFramework->Pan(-iMapDragOffset.iX,-iMapDragOffset.iY);
+            iFramework->Pan(iMapDragAnchorInMapCoords.iX,iMapDragAnchorInMapCoords.iY,CartoType::TCoordType::Map,
+                            point.x,point.y,CartoType::TCoordType::Display);
             iMapDragOffset = CartoType::TPoint(0,0);
             iMapDragAnchor.iX = point.x;
             iMapDragAnchor.iY = point.y;
+            iMapDragAnchorInMapCoords = iMapDragAnchor;
+            iFramework->ConvertPoint(iMapDragAnchorInMapCoords.iX,iMapDragAnchorInMapCoords.iY,CartoType::TCoordType::Display,CartoType::TCoordType::Map);
             }
 
         CDC* dc = GetDC();
@@ -1231,6 +1243,8 @@ void CCartoTypeDemoView::OnLButtonDown(UINT nFlags,CPoint point)
     iMapDragEnabled = true;
     iMapDragAnchor.iX = point.x;
     iMapDragAnchor.iY = point.y;
+    iMapDragAnchorInMapCoords = iMapDragAnchor;
+    iFramework->ConvertPoint(iMapDragAnchorInMapCoords.iX,iMapDragAnchorInMapCoords.iY,CartoType::TCoordType::Display,CartoType::TCoordType::Map);
     TRACKMOUSEEVENT t;
     t.cbSize = sizeof(t);
     t.dwFlags = TME_LEAVE;
@@ -1559,8 +1573,14 @@ void CCartoTypeDemoView::OnUpdateViewReloadStyleSheet(CCmdUI *pCmdUI)
 
 void CCartoTypeDemoView::OnViewZoomIn()
     {
+    CPoint point;
+    bool set_centre = SetCentre(point);
+
     CCartoTypeDemoApp* app = (CCartoTypeDemoApp*)AfxGetApp();
-    iFramework->Zoom(app->ZoomFactor());
+    if (set_centre)
+        iFramework->ZoomAt(app->ZoomFactor(),point.x,point.y,CartoType::TCoordType::Display);
+    else
+        iFramework->Zoom(app->ZoomFactor());
     Update();
     }
 
@@ -1571,8 +1591,14 @@ void CCartoTypeDemoView::OnUpdateViewZoomIn(CCmdUI *pCmdUI)
 
 void CCartoTypeDemoView::OnViewZoomOut()
     {
+    CPoint point;
+    bool set_centre = SetCentre(point);
+
     CCartoTypeDemoApp* app = (CCartoTypeDemoApp*)AfxGetApp();
-    iFramework->Zoom(1 / app->ZoomFactor());
+    if (set_centre)
+        iFramework->ZoomAt(1.0 / app->ZoomFactor(),point.x,point.y,CartoType::TCoordType::Display);
+    else
+        iFramework->Zoom(1.0 / app->ZoomFactor());
     Update();
     }
 
@@ -1583,7 +1609,11 @@ void CCartoTypeDemoView::OnUpdateViewZoomOut(CCmdUI *pCmdUI)
 
 void CCartoTypeDemoView::OnViewRotate()
     {
-    iFramework->Rotate(15);
+    CPoint point;
+    if (SetCentre(point))
+        iFramework->RotateAndZoom(15,1,point.x,point.y,CartoType::TCoordType::Display);
+    else
+        iFramework->Rotate(15);
     Update();
     }
 
@@ -1731,6 +1761,7 @@ void CCartoTypeDemoView::OnViewMetricUnits()
     iMetricUnits = !iMetricUnits;
     iFramework->SetLocale(iMetricUnits ? "en_xx" : "en");
     CreateLegend();
+    iFramework->SetScaleBar(iMetricUnits,2.5,"in",CartoType::TNoticePosition::BottomLeft);
     if (iDrawLegend || iDrawDrivingInstructions)
         {
         if (iDrawDrivingInstructions)
@@ -1786,10 +1817,10 @@ void CCartoTypeDemoView::OnViewFlyThrough()
     if (iRouteIter)
         {
         iFramework->SetScaleDenominator(5000);
-        iFramework->SetRotationRadians(iRouteIter->Direction());
-        iFramework->SetPerspective(true);
+        iFramework->SetRotation(iRouteIter->Direction() * CartoType::KRadiansToDegreesDouble);
+        //iFramework->SetPerspective(true);
         iFramework->SetFollowMode(CartoType::EFollowModeLocationHeading);
-        iFlyThroughTimer = (UINT)SetTimer(1,250,0);
+        iFlyThroughTimer = (UINT)SetTimer(1,500,0);
         }
     }
 
@@ -2028,9 +2059,9 @@ void CCartoTypeDemoView::OnTimer(UINT_PTR aEventId)
     {
     if (iFlyThroughTimer && iRouteIter)
         {
-        // Go forward 25 metres.
+        // Go forward 17.5 metres per second for a speed of about 40 miles an hour.
         bool at_end = false;
-        SimulateNavigationFix(25,at_end);
+        SimulateNavigationFix(17.5 / 2,at_end);
 
         // Stop the fly-through if we have reached the end.
         if (at_end)
