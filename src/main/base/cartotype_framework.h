@@ -329,6 +329,7 @@ class TViewState
     {
     public:
     bool operator==(const TViewState& aOther) const;
+    bool operator<(const TViewState& aOther) const;
     bool operator!=(const TViewState& aOther) const { return !(*this == aOther); };
 
     int32 iWidthInPixels = 256;
@@ -338,6 +339,9 @@ class TViewState
     double iRotationDegrees = 0;
     bool iPerspective = false;
     TPerspectiveParam iPerspectiveParam;
+
+    private:
+    auto Tuple() const { return std::forward_as_tuple(iWidthInPixels,iHeightInPixels,iViewCenterInMapCoords,iScaleDenominator,iRotationDegrees,iPerspective,iPerspectiveParam); }
     };
 
 /**
@@ -707,7 +711,8 @@ class CFramework: public MNavigatorObserver
     TResult SetVehiclePosOffset(double aXOffset,double aYOffset);
     TResult SetFollowMode(TFollowMode aFollowMode);
     TFollowMode FollowMode() const;
-    TResult GetNavigationPosition(TPointFP& aPos,TCoordType aCoordType);
+    TResult GetNavigationPosition(TPointFP& aPos,TCoordType aCoordType) const;
+    void GetNavigationData(TNavigationData& aData,double& aHeading) const;
     
     // locales
     void SetLocale(const char* aLocale);

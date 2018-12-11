@@ -1816,9 +1816,6 @@ void CCartoTypeDemoView::OnViewFlyThrough()
     iRouteIter.reset(new CartoType::TRouteIterator(*iFramework->Route()));
     if (iRouteIter)
         {
-        iFramework->SetScaleDenominator(5000);
-        iFramework->SetRotation(iRouteIter->Direction() * CartoType::KRadiansToDegreesDouble);
-        //iFramework->SetPerspective(true);
         iFramework->SetFollowMode(CartoType::EFollowModeLocationHeading);
         iFlyThroughTimer = (UINT)SetTimer(1,500,0);
         }

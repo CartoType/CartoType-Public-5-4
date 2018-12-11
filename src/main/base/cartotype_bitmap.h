@@ -178,8 +178,9 @@ class CBitmap: public TBitmap
     public:
     CBitmap();
     CBitmap(TBitmapType aType,int32 aWidth,int32 aHeight,int32 aRowBytes = 0,std::shared_ptr<CPalette> aPalette = nullptr);
-    CBitmap(const TBitmap& aOther);
+    CBitmap(const CBitmap& aOther);
     CBitmap(CBitmap&& aOther);
+    CBitmap(const TBitmap& aOther);
     CBitmap& operator=(const TBitmap& aOther);
     CBitmap& operator=(CBitmap&& aOther);
     static std::unique_ptr<CBitmap> New(TResult& aError,MInputStream& aInputStream);

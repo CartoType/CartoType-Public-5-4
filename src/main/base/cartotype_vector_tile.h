@@ -196,26 +196,6 @@ class TLabelSetSpec: public TViewState
         dynamic_cast<TViewState&>(*this) = aViewState;
         }
 
-    bool operator==(const TLabelSetSpec& aOther) const
-        {
-        return iWidthInPixels == aOther.iWidthInPixels &&
-               iHeightInPixels == aOther.iHeightInPixels &&
-               iViewCenterInMapCoords == aOther.iViewCenterInMapCoords &&
-               iScaleDenominator == aOther.iScaleDenominator &&
-               iRotationDegrees == aOther.iRotationDegrees &&
-               iPerspective == aOther.iPerspective &&
-               iPerspectiveParam == aOther.iPerspectiveParam;
-        }
-    bool operator!=(const TLabelSetSpec& aOther) const
-        {
-        return !(*this == aOther);
-        }
-    bool operator<(const TLabelSetSpec& aOther) const
-        {
-        return std::forward_as_tuple(iWidthInPixels,iHeightInPixels,iViewCenterInMapCoords,iScaleDenominator,iRotationDegrees,iPerspective,iPerspectiveParam) <
-               std::forward_as_tuple(aOther.iWidthInPixels,aOther.iHeightInPixels,aOther.iViewCenterInMapCoords,aOther.iScaleDenominator,aOther.iRotationDegrees,aOther.iPerspective,aOther.iPerspectiveParam);
-        }
-
     bool Supersedes(const TLabelSetSpec& aOther) const
         {
         return *this != aOther; // any label set request supersedes a different one already in the task queue
@@ -288,7 +268,7 @@ class CTileDrawData: public CDrawDataBase
     /** The transform from map object coordinates to the OpenGL coordinate system; set by the vector tile server just before drawing. */
     TTransform3FP m_transform;
     /** Flags stating which layers are enabled; set by the vector tile server just before drawing. */
-    std::vector<bool>* m_enabled_layers = nullptr;
+    std::shared_ptr<std::vector<bool>> m_enabled_layers;
     /** The style used to create the draw data. */
     std::shared_ptr<CMapStyle> m_style;
     };
@@ -385,6 +365,12 @@ class CPositionedLabel
 class TMapState
     {
     public:
+    TMapState() :
+        m_location_valid(false),
+        m_heading_valid(false)
+        {
+        }
+
     void Set(CFramework& aFramework);
     TMapState Interpolate(const TMapState& aOther,double aTime);
 
@@ -393,6 +379,10 @@ class TMapState
     TTransform3FP m_map_transform;
     TTransformFP m_map_transform_2D;
     TTransform3FP m_perspective_transform;
+    TPointFP m_location_in_map_coords;
+    double m_heading_in_radians = 0;
+    bool m_location_valid : 1;
+    bool m_heading_valid : 1;
     };
 
 /**
@@ -476,6 +466,12 @@ class CVectorTileHelper
     virtual std::unique_ptr<CLabelDrawData> CreateLabelDrawData(CFramework& /*aFramework*/,const std::vector<CPositionedLabel>& /*aLabelArray*/,
                                                                 CPositionedBitmap /*aNoticeBitmap*/,const TViewState& /*aViewState*/) { return nullptr; }
 
+    /**
+    This function is called when the icon used to display the user's location changes.
+    The implementation should store the icon in a texture so that it can be drawn at the correct position and orientation.
+    */
+    virtual void OnLocationIconChange(const CBitmap& aLocationIcon,const TRectFP& aBounds) = 0;
+    
     /**
     This function is called just before drawing a frame, whether by a call to DrawFrame or multiple calls to Draw.
     It can be used to set any parameters affecting the whole frame, like the viewport size in pixels.
@@ -561,6 +557,7 @@ class CVectorTileServer: public MFrameworkObserver
     CFramework& m_framework;
     std::shared_ptr<CVectorTileHelper> m_helper;
     size_t m_max_zoom_level;
+    size_t m_location_icon_zoom_level;
     TTaskQueue<TTileSpec> m_task_queue;
     TTaskOutputQueue<std::shared_ptr<CVectorTile>> m_tile_queue;
     size_t m_max_tile_cache_items = 128;
@@ -568,7 +565,7 @@ class CVectorTileServer: public MFrameworkObserver
     std::vector<std::unique_ptr<CDrawTileTask>> m_task_array;
     std::vector<std::thread> m_thread_array;
     std::vector<std::shared_ptr<CMapStyle>> m_style_array;
-    std::vector<std::unique_ptr<std::vector<bool>>> m_enabled_layer_array;
+    std::vector<std::shared_ptr<std::vector<bool>>> m_enabled_layer_array;
     std::mutex m_style_array_mutex;
     TRectFP m_level_0_tile_extent;
     double m_level_0_tile_width_in_metres;

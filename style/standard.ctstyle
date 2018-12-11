@@ -203,6 +203,7 @@
         </rampGradient>
         <def id='broad-arrow' string='M -450 -50 V 50 H 250 L -100 400 H 50 L 450 0 L 50 -400 H -100 L 250 -50 H -450 Z'/>
         <def id='arrow' string='M -350 25 V -25 H 0 V -100 L 250 0 L 0 100 V 25 Z'/>
+        <def id='location-arrow' string='M -500 -500 L 500 0 L -500 500 L -300 0 Z'/>
         <macro id='minor-road-label'>
             <scale max='40000'>
                 <label case='assume-title' color='dimgrey' font-size='75%,5pt,12pt' glow='white' glowWidth='7%,0.5pt' priority='-2' wrapLines='0'/>
@@ -235,32 +236,11 @@
                 <label case='assume-title' color='~color~' font-size='12m,6pt,12pt' glow='white' glowWidth='7%,0.5pt' priority='-20' wrapWidth='5em'/>
             </condition>
         </macro>
-        <macro id='route-circle'>
-            <icon canOverlap='true' width='36m@6000_180m@40000,10pt'>
-                <svg width="110" height="110">
-                    <circle fill="~color~" cx="55" cy="55" r="50" opacity="0.2"/>
-                    <circle fill="~color~" cx="55" cy="55" r="10" opacity="0.5"/>
-                    <circle fill="none" stroke="~color~" cx="55" cy="55" r="49" stroke-width="8"/>
-                    <circle fill="none" stroke="white" cx="55" cy="55" r="53" stroke-width="1" opacity="0.5"/>
-                </svg>
-            </icon>
+        <macro id='route-highlight'>
+            <highlight distance='6m@6000_30m@40000' fill='~color~' width='1.5m@6000_18m@40000,1.5pt'/>
+            <highlight distance='-6m@6000_-30m@40000' fill='~color~' width='1.5m@6000_18m@40000,1.5pt'/>
+            <line fill='none' width='8m@6000_50m@40000,1.5pt'/>
         </macro>
-        <if exp='GL'>
-            <macro id='route-highlight'>
-                <highlight distance='6m@6000_30m@40000' fill='~color~' width='2m@6000_30m@40000,1.5pt'/>
-                <highlight distance='-6m@6000_-30m@40000' fill='~color~' width='2m@6000_30m@40000,1.5pt'/>
-                <line fill='none' width='8m@6000_50m@40000,1.5pt' truncationAtStart='20m@6000_100m@40000,6pt' truncationAtEnd='20m@6000_100m@40000,6pt'/>
-                <repeatedSymbol fill='~color~' gap='4000' maxScale='50000' path='#broad-arrow' isLabel='yes'/>
-            </macro>
-        </if>
-        <if exp='!GL'>
-            <macro id='route-highlight'>
-                <highlight distance='6m@6000_30m@40000' fill='~color~' width='2m@6000_30m@40000,1.5pt'/>
-                <highlight distance='-6m@6000_-30m@40000' fill='~color~' width='2m@6000_30m@40000,1.5pt'/>
-                <line fill='none' width='8m@6000_50m@40000,1.5pt' truncationAtStart='20m@6000_100m@40000,6pt' truncationAtEnd='20m@6000_100m@40000,6pt'/>
-                <repeatedSymbol fill='~color~' gap='4000' maxScale='50000' path='#broad-arrow'/>
-            </macro>
-        </if>
         <macro id='traffic-highlight'>
             <condition exp='(Type bitand 0xFF) le ~maxspeed~'>
                 <shape fill='~color~' opacity='0.3'/>
@@ -273,7 +253,7 @@
             </condition>
         </macro>
         <macro id='one-way-arrow'>
-            <oneWayArrow fill='~color~' gap='2500' isLabel='yes' opacity='0.5' path='#arrow'/>
+            <oneWayArrow fill='~color~' gap='2500'  opacity='0.5' path='#arrow'/>
         </macro>
         <hachure angle='90' color='blue+0.9white' id='wetland-hachure' interval='2.5pt' width='0.75pt'/>
         <macro id='water'>
@@ -847,10 +827,10 @@
     </scale>
     <layer name='route' roadflags='#F000'>
         <condition exp='(Type bitand 0xFFF) == 0'>
-            <macro color='ncsblue' ref='route-highlight'/>
+            <macro color='ncsred+0.3yellow' ref='route-highlight'/>
         </condition>
         <condition exp='(Type bitand 0xFFF) == 1'>
-            <macro color='ncsred' ref='route-highlight'/>
+            <macro color='ncsblue' ref='route-highlight'/>
         </condition>
         <condition exp='(Type bitand 0xFFF) gt 1'>
             <macro color='ncsgreen' ref='route-highlight'/>
@@ -859,22 +839,10 @@
     <layer name='waypoint' roadflags='#F000'>
         <label baseline='central-caps' color='grey+orange' font-size='20m@6000_90m@40000,7pt,12pt' labelFormat='{[padding:20%,0.6pt;background-color:#FFFFFFC0;border-color:orange+grey;border-width:12%,0.7;border-radius:50%,1.2pt};{]}' position='point' priority='-21' wrapLines='0' wrapWidth='30em'/>
     </layer>
-    <layer name='route-position' roadflags='#F000'>
-        <macro color='ncsred' ref='route-circle'/>
-        <label priority='-10'/>
-    </layer>
     <layer name='route-vector' roadflags='#F000'>
-        <line width='40m,12pt,42pt'/>
+        <line width='27m@6000_180m@40000,18pt'/>
         <label priority='-9'/>
-        <repeatedSymbol fill='blue' gap='0' isLabel='yes' maxScale='1500000' path='#arrow'/>
-    </layer>
-    <layer name='route-start' roadflags='#F000'>
-        <macro color='ncsblue' ref='route-circle'/>
-        <label priority='-9'/>
-    </layer>
-    <layer name='route-end' roadflags='#F000'>
-        <macro color='ncsgreen' ref='route-circle'/>
-        <label priority='-9'/>
+        <repeatedSymbol fill='ncsred+0.3yellow' opacity='0.8' gap='0' maxScale='1500000' path='#location-arrow'/>
     </layer>
     <layer name='found'>
         <shape border='ncsred+0.5white' borderWidth='2m,0.6pt' fill='#FFFF0080'/>
