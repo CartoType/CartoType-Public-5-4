@@ -1012,6 +1012,9 @@ void MapForm::ShowNextFoundObject()
     CartoType::TResult error = m_framework->InsertCopyOfMapObject(memory_map_handle,found_layer,*object,radius,
                                                                   CartoType::TCoordType::MapMeter,m_found_object_id,true);
     if (!error)
+        {
+        bool animate = m_framework->AnimateTransitions();
+        m_framework->SetAnimateTransitions(true);
         m_framework->SetView(*object,64,4000);
         m_framework->SetAnimateTransitions(animate);
         }
