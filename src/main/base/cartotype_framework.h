@@ -437,6 +437,7 @@ class CFramework: public MNavigatorObserver
     void SetCopyrightNotice();
     void SetCopyrightNotice(const CString& aCopyright);
     void SetLegend(std::unique_ptr<CLegend> aLegend,double aWidth,const char* aUnit,TNoticePosition aPosition);
+    void SetLegend(const CLegend& aLegend,double aWidth,const char* aUnit,TNoticePosition aPosition);
     void EnableLegend(bool aEnable);
     void SetScaleBar(bool aMetricUnits,double aWidth,const char* aUnit,TNoticePosition aPosition);
     void EnableScaleBar(bool aEnable);

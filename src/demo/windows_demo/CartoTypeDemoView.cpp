@@ -1687,7 +1687,7 @@ void CCartoTypeDemoView::OnUpdateViewLatlong(CCmdUI *pCmdUI)
 
 void CCartoTypeDemoView::OnViewStylesheet()
     {
-    CFileDialog file_dialog(true,_TEXT(".xml"),NULL,0,TEXT("style sheets (*.xml)|*.xml||"));
+    CFileDialog file_dialog(true,_TEXT(".ctstyle"),NULL,0,TEXT("style sheets (*.ctstyle)|*.ctstyle||"));
     if (file_dialog.DoModal() == IDOK)
         LoadStyleSheet(file_dialog.GetPathName());
     }

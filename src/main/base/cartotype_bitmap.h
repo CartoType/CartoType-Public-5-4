@@ -90,6 +90,8 @@ class TBitmap
         iType(aType)
         {
         }
+    TBitmap(const CBitmap& aBitmap) = delete;
+    TBitmap& operator=(const CBitmap& aBitmap) = delete;
 
     using TColorFunction = TColor(*)(const TBitmap& aBitmap,uint32 aX,uint32 aY);
     TColorFunction ColorFunction() const;
